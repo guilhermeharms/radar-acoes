@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Radar de Ativos — Escritório</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ── CONFIG: cole suas credenciais no <script> lá embaixo ── */
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --border: #E2E0D8;
+    --border-strong: #C8C6BC;
+    --text: #1A1916;
+    --muted: #6B6960;
+    --hint: #A09D94;
+    --accent: #1A1916;
+    --accent-fg: #F7F6F2;
+    --green-bg: #EAF3DE;
+    --green-fg: #27500A;
+    --amber-bg: #FAEEDA;
+    --amber-fg: #633806;
+    --red-bg: #FCEBEB;
+    --red-fg: #791F1F;
+    --blue-bg: #E6F1FB;
+    --blue-fg: #0C447C;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 680px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+
+  /* ── HEADER ── */
+  .site-header { margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 0.5px solid var(--border); }
+  .site-header h1 { font-size: 20px; font-weight: 500; letter-spacing: -0.01em; }
+  .site-header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 0; border: 0.5px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; width: fit-content; margin-bottom: 1.75rem; }
+  .tab { padding: 8px 20px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; background: transparent; border: none; color: var(--muted); transition: all 0.12s; }
+  .tab.active { background: var(--text); color: var(--bg); font-weight: 500; }
+  .tab:not(:last-child) { border-right: 0.5px solid var(--border); }
+
+  /* ── FORM ── */
+  .form-stack { display: flex; flex-direction: column; gap: 14px; }
+  .field label { display: block; font-size: 11px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  input, textarea, select {
+    width: 100%; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 14px;
+    background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); outline: none; transition: border-color 0.12s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--border-strong); }
+  textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn-submit {
+    width: 100%; padding: 11px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; background: var(--text); color: var(--bg); border: none;
+    border-radius: var(--radius-sm); transition: opacity 0.15s; margin-top: 2px;
+  }
+  .btn-submit:hover { opacity: 0.85; }
+  .btn-submit:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── TOAST ── */
+  .toast { padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 1rem; display: none; }
+  .toast.ok { background: var(--green-bg); color: var(--green-fg); border: 0.5px solid #C0DD97; display: block; }
+  .toast.err { background: var(--red-bg); color: var(--red-fg); border: 0.5px solid #F09595; display: block; }
+
+  /* ── CONFIG BANNER ── */
+  .config-banner { background: var(--amber-bg); color: var(--amber-fg); border: 0.5px solid #FAC775; border-radius: var(--radius); padding: 12px 14px; font-size: 13px; margin-bottom: 1.5rem; line-height: 1.6; }
+  .config-banner strong { font-weight: 500; }
+  .config-banner code { font-family: 'DM Mono', monospace; font-size: 12px; background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 3px; }
+
+  /* ── STATS ── */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .stat { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* ── PANEL ── */
+  .panel-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .panel-bar span { font-size: 12px; color: var(--muted); }
+  .btn-refresh { padding: 6px 14px; font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; background: transparent; border: 0.5px solid var(--border); border-radius: var(--radius-sm); color: var(--muted); transition: all 0.12s; }
+  .btn-refresh:hover { border-color: var(--border-strong); color: var(--text); }
+
+  /* ── CARDS ── */
+  .cards { display: flex; flex-direction: column; gap: 10px; }
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .ticker { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; }
+  .badge { font-size: 11px; padding: 3px 10px; border-radius: 100px; white-space: nowrap; font-weight: 500; }
+  .badge-1 { background: var(--blue-bg); color: var(--blue-fg); }
+  .badge-2 { background: var(--amber-bg); color: var(--amber-fg); }
+  .badge-3 { background: var(--red-bg); color: var(--red-fg); }
+  .card-desc { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 10px; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .card-meta { font-size: 12px; color: var(--hint); }
+  .btn-upvote { display: flex; align-items: center; gap: 5px; padding: 5px 12px; font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; background: transparent; border: 0.5px solid var(--border); border-radius: 100px; color: var(--muted); transition: all 0.12s; }
+  .btn-upvote:hover { border-color: var(--border-strong); color: var(--text); }
+  .btn-upvote.voted { background: var(--green-bg); color: var(--green-fg); border-color: #C0DD97; }
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--muted); font-size: 14px; }
+  .loading { text-align: center; padding: 2rem; color: var(--hint); font-size: 13px; }
+
+  @media (max-width: 480px) {
+    .row2 { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="site-header">
+    <h1>Radar de ativos — escritório</h1>
+    <p>Ativos fora do radar mencionados por clientes · use para priorizar análises</p>
+  </div>
+
+  <!-- banner de configuração (some depois de configurado) -->
+  <div class="config-banner" id="configBanner">
+    <strong>Configure o armazenamento antes de publicar.</strong><br>
+    Abra este arquivo, vá até o <code>&lt;script&gt;</code> no final e preencha <code>JSONBIN_KEY</code> e <code>JSONBIN_BIN_ID</code>.
+    Veja o passo a passo no README abaixo.
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('form')">Nova sugestão</button>
+    <button class="tab" onclick="switchTab('panel')">Painel</button>
+  </div>
+
+  <!-- FORM TAB -->
+  <div id="tab-form">
+    <div id="toast" class="toast"></div>
+    <div class="form-stack">
+      <div class="row2">
+        <div class="field">
+          <label>Ativo / Ticker</label>
+          <input type="text" id="ticker" placeholder="MELI34, BTC, NVDA…" maxlength="20" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Seu nome</label>
+          <input type="text" id="assessor" placeholder="Nome do assessor" maxlength="40" />
+        </div>
+      </div>
+      <div class="field">
+        <label>O que o cliente perguntou?</label>
+        <textarea id="descricao" placeholder="Ex: cliente perguntou se vale entrar em MELI34 após a queda, disse que viu análise no YouTube…"></textarea>
+      </div>
+      <div class="field">
+        <label>Frequência de menção</label>
+        <select id="freq">
+          <option value="1">Poucos clientes mencionaram</option>
+          <option value="2">Vários clientes perguntaram</option>
+          <option value="3">Muitos clientes — urgente analisar</option>
+        </select>
+      </div>
+      <button class="btn-submit" id="submitBtn" onclick="submitSuggestion()">Enviar sugestão</button>
+    </div>
+  </div>
+
+  <!-- PANEL TAB -->
+  <div id="tab-panel" style="display:none">
+    <div class="stats" id="stats">
+      <div class="stat"><div class="stat-val">—</div><div class="stat-lbl">Sugestões</div></div>
+      <div class="stat"><div class="stat-val">—</div><div class="stat-lbl">Ativos únicos</div></div>
+      <div class="stat"><div class="stat-val">—</div><div class="stat-lbl">Urgentes</div></div>
+    </div>
+    <div class="panel-bar">
+      <span id="panelCount">carregando…</span>
+      <button class="btn-refresh" onclick="loadSuggestions()">↻ Atualizar</button>
+    </div>
+    <div id="cards" class="loading">Carregando sugestões…</div>
+  </div>
+
+</div>
+
+<script>
+  // ────────────────────────────────────────────────
+  //  CONFIGURAÇÃO — preencha aqui
+  // ────────────────────────────────────────────────
+  const JSONBIN_KEY    = '$2a$10$ovXz1cJAkU6jtP7W7bQK8.SFUDWtfJ3QqTikoHpSov9URGfOObqY6';   // ex: $2a$10$abc...
+  const JSONBIN_BIN_ID = '69bd90aac3097a1dd5438d1b';        // ex: 664a1f...
+  // ────────────────────────────────────────────────
+
+  const isConfigured = !JSONBIN_KEY.startsWith('SEU') && !JSONBIN_BIN_ID.startsWith('SEU');
+  if (isConfigured) document.getElementById('configBanner').style.display = 'none';
+
+  const BASE = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+  const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY };
+
+  const freqLabels = ['', 'Poucas menções', 'Várias menções', 'Urgente analisar'];
+  const freqClass  = ['', 'badge-1', 'badge-2', 'badge-3'];
+
+  let votedIds = JSON.parse(localStorage.getItem('radar_voted') || '[]');
+
+  function switchTab(t) {
+    document.querySelectorAll('.tab').forEach((el, i) =>
+      el.classList.toggle('active', ['form', 'panel'][i] === t));
+    document.getElementById('tab-form').style.display  = t === 'form'  ? 'block' : 'none';
+    document.getElementById('tab-panel').style.display = t === 'panel' ? 'block' : 'none';
+    if (t === 'panel') loadSuggestions();
+  }
+
+  async function readBin() {
+    const r = await fetch(`${BASE}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } });
+    const d = await r.json();
+    return Array.isArray(d.record?.sugestoes) ? d.record.sugestoes : [];
+  }
+
+  async function writeBin(list) {
+    await fetch(BASE, { method: 'PUT', headers: HEADERS, body: JSON.stringify({ sugestoes: list }) });
+  }
+
+  function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type;
+    setTimeout(() => { el.className = 'toast'; }, 3500);
+  }
+
+  async function submitSuggestion() {
+    if (!isConfigured) { showToast('Configure JSONBIN_KEY e JSONBIN_BIN_ID no código.', 'err'); return; }
+    const ticker   = document.getElementById('ticker').value.trim().toUpperCase();
+    const assessor = document.getElementById('assessor').value.trim();
+    const descricao = document.getElementById('descricao').value.trim();
+    const freq     = parseInt(document.getElementById('freq').value);
+    if (!ticker || !assessor || !descricao) { showToast('Preencha todos os campos.', 'err'); return; }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Enviando…';
+
+    try {
+      const list = await readBin();
+      const entry = {
+        id: Date.now().toString(36),
+        ticker, assessor, descricao, freq, votes: 0,
+        date: new Date().toLocaleDateString('pt-BR')
+      };
+      list.unshift(entry);
+      await writeBin(list);
+      document.getElementById('ticker').value = '';
+      document.getElementById('assessor').value = '';
+      document.getElementById('descricao').value = '';
+      showToast('Sugestão enviada! Seus colegas já podem ver.', 'ok');
+    } catch (e) {
+      showToast('Erro ao salvar. Verifique as credenciais.', 'err');
+    }
+
+    btn.disabled = false; btn.textContent = 'Enviar sugestão';
+  }
+
+  async function upvote(id) {
+    if (votedIds.includes(id)) return;
+    try {
+      const list = await readBin();
+      const item = list.find(x => x.id === id);
+      if (item) item.votes = (item.votes || 0) + 1;
+      await writeBin(list);
+      votedIds.push(id);
+      localStorage.setItem('radar_voted', JSON.stringify(votedIds));
+      loadSuggestions();
+    } catch(e) {}
+  }
+
+  async function loadSuggestions() {
+    if (!isConfigured) {
+      document.getElementById('cards').innerHTML = '<div class="empty">Configure as credenciais do JSONBin para ver as sugestões.</div>';
+      return;
+    }
+    document.getElementById('cards').innerHTML = '<div class="loading">Carregando…</div>';
+    try {
+      const list = await readBin();
+      const urgent = list.filter(x => x.freq === 3).length;
+      const ativos = new Set(list.map(x => x.ticker)).size;
+
+      document.getElementById('stats').innerHTML = `
+        <div class="stat"><div class="stat-val">${list.length}</div><div class="stat-lbl">Sugestões</div></div>
+        <div class="stat"><div class="stat-val">${ativos}</div><div class="stat-lbl">Ativos únicos</div></div>
+        <div class="stat"><div class="stat-val">${urgent}</div><div class="stat-lbl">Urgentes</div></div>`;
+
+      document.getElementById('panelCount').textContent =
+        list.length === 0 ? 'Nenhuma sugestão ainda' : `${list.length} sugestão${list.length !== 1 ? 's' : ''}`;
+
+      if (list.length === 0) {
+        document.getElementById('cards').innerHTML = '<div class="empty">Nenhuma sugestão ainda. Seja o primeiro!</div>';
+        return;
+      }
+
+      const sorted = [...list].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+      document.getElementById('cards').innerHTML = sorted.map(s => `
+        <div class="card">
+          <div class="card-top">
+            <span class="ticker">${s.ticker}</span>
+            <span class="badge ${freqClass[s.freq]}">${freqLabels[s.freq]}</span>
+          </div>
+          <div class="card-desc">${s.descricao}</div>
+          <div class="card-footer">
+            <span class="card-meta">${s.assessor} · ${s.date || ''}</span>
+            <button class="btn-upvote${votedIds.includes(s.id) ? ' voted' : ''}" onclick="upvote('${s.id}')">
+              ▲ ${s.votes || 0} apoios
+            </button>
+          </div>
+        </div>`).join('');
+    } catch(e) {
+      document.getElementById('cards').innerHTML = '<div class="empty">Erro ao carregar. Verifique as credenciais.</div>';
+    }
+  }
+</script>
+
+<!--
+════════════════════════════════════════════════
+  PASSO A PASSO — configurar JSONBin (5 min)
+════════════════════════════════════════════════
+
+1. Acesse https://jsonbin.io e crie uma conta grátis.
+
+2. No dashboard, clique em "API Keys" → copie o "Master Key".
+   Cole em: JSONBIN_KEY = 'cole aqui'
+
+3. Clique em "Create Bin" → cole [] como conteúdo inicial → salve.
+   Copie o Bin ID que aparece na URL (ex: 664a1f…).
+   Cole em: JSONBIN_BIN_ID = 'cole aqui'
+
+4. Suba o arquivo no Vercel:
+   - Acesse https://vercel.com → New Project → "Deploy from file"
+   - Arraste este HTML → clique Deploy
+   - Vercel gera um link público (ex: radar-assessores.vercel.app)
+
+   OU GitHub Pages:
+   - Crie um repo público → suba o arquivo como index.html
+   - Settings → Pages → Source: main → /root
+   - Link: seuusuario.github.io/nome-do-repo
+
+5. Compartilhe o link no WhatsApp do escritório. ✓
+
+════════════════════════════════════════════════
+-->
+</body>
+</html>
